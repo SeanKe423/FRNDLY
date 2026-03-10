@@ -7,6 +7,12 @@ const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
+
+const profileLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 profile update requests per windowMs
+});
 
 // Auth routes
 router.post('/signup', signup);
@@ -14,7 +20,7 @@ router.post('/login', login);
 
 // Profile routes
 router.get('/profile', auth, getProfile);
-router.put('/profile', auth, upload, updateProfile);
+router.put('/profile', auth, profileLimiter, upload, updateProfile);
 
 // Matches route
 router.get('/matches', auth, async (req, res) => {
