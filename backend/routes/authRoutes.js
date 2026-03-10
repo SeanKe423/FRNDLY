@@ -14,16 +14,26 @@ const profileLimiter = rateLimit({
     max: 100, // limit each IP to 100 profile update requests per windowMs
 });
 
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 authenticated requests per windowMs
+});
+
+const adminCreationLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // limit each IP to 5 admin creation requests per windowMs
+});
+
 // Auth routes
 router.post('/signup', signup);
 router.post('/login', login);
 
 // Profile routes
-router.get('/profile', auth, getProfile);
-router.put('/profile', auth, profileLimiter, upload, updateProfile);
+router.get('/profile', authLimiter, auth, getProfile);
+router.put('/profile', authLimiter, auth, profileLimiter, upload, updateProfile);
 
 // Matches route
-router.get('/matches', auth, async (req, res) => {
+router.get('/matches', authLimiter, auth, async (req, res) => {
     try {
         console.log('Matches route hit for user:', req.user.id);
         
@@ -62,7 +72,7 @@ router.get('/matches', auth, async (req, res) => {
 });
 
 // Add this route to create an admin (you may want to remove this after creating the first admin)
-router.post('/create-admin', async (req, res) => {
+router.post('/create-admin', adminCreationLimiter, async (req, res) => {
     try {
         const { email, password, username } = req.body;
         
@@ -93,7 +103,7 @@ router.post('/create-admin', async (req, res) => {
 });
 
 // Add this route to check admin status
-router.get('/me', auth, async (req, res) => {
+router.get('/me', authLimiter, auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');
         res.json(user);
