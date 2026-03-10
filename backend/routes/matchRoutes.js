@@ -6,6 +6,10 @@ const User = require('../models/User');
 router.get('/find-matches', async (req, res) => {
     try {
         const { userId } = req.query;
+        // Validate that userId is a primitive string to avoid NoSQL injection
+        if (typeof userId !== 'string') {
+            return res.status(400).json({ message: 'Invalid userId' });
+        }
         
         // Fetch the current user's data
         const currentUser = await User.findById(userId);
@@ -15,7 +19,7 @@ router.get('/find-matches', async (req, res) => {
 
         // Define matching criteria based on interests and gender preference
         const matchCriteria = {
-            _id: { $ne: userId },  // Exclude the current user
+            _id: { $ne: { $eq: userId } },  // Exclude the current user, treating userId as a literal
             gender: currentUser.genderPreference === 'any' ? { $exists: true } : currentUser.genderPreference,
             genderPreference: { $in: [currentUser.gender, 'any'] },  // Match user's gender or 'any'
             interests: { $in: currentUser.interests }  // At least one common interest
