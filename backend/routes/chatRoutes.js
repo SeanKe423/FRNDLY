@@ -2,9 +2,17 @@ const express = require('express');
 const router = express.Router();
 const Chat = require('../models/Chat');
 const auth = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+
+const chatLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs for chat routes
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 // Get or create chat with specific user
-router.get('/chat/:userId', auth, async (req, res) => {
+router.get('/chat/:userId', auth, chatLimiter, async (req, res) => {
     try {
         console.log('Getting chat for users:', req.user.id, req.params.userId);
         
@@ -35,7 +43,7 @@ router.get('/chat/:userId', auth, async (req, res) => {
 });
 
 // Send message
-router.post('/chat/:chatId/message', auth, async (req, res) => {
+router.post('/chat/:chatId/message', auth, chatLimiter, async (req, res) => {
     try {
         const chat = await Chat.findById(req.params.chatId);
         if (!chat) {
