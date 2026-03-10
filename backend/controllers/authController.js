@@ -2,6 +2,11 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Escape special characters in a string so it can be safely used inside a RegExp
+function escapeRegExp(str) {
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 exports.signup = async (req, res) => {
     const { username, email, password } = req.body;
     try {
@@ -48,7 +53,7 @@ exports.signup = async (req, res) => {
         }
 
         const existingUsername = await User.findOne({ 
-            username: new RegExp(`^${username}$`, 'i') 
+            username: new RegExp(`^${escapeRegExp(username)}$`, 'i') 
         });
         
         if (existingUsername) {
