@@ -2,9 +2,15 @@ const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
 const auth = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+
+const reportSubmitLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 50, // limit each IP to 50 report submissions per windowMs
+});
 
 // Submit report
-router.post('/submit', auth, async (req, res) => {
+router.post('/submit', auth, reportSubmitLimiter, async (req, res) => {
     try {
         console.log('Received report:', req.body); // Debug log
 
