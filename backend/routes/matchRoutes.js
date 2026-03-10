@@ -2,8 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const rateLimit = require('express-rate-limit');
 
-router.get('/find-matches', async (req, res) => {
+const matchLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs for this route
+});
+
+router.get('/find-matches', matchLimiter, async (req, res) => {
     try {
         const { userId } = req.query;
         
