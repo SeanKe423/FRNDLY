@@ -4,9 +4,15 @@ const Report = require('../models/Report');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
+const rateLimit = require('express-rate-limit');
+
+const adminLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each admin IP to 100 requests per windowMs
+});
 
 // Get all reports
-router.get('/reports', auth, admin, async (req, res) => {
+router.get('/reports', auth, admin, adminLimiter, async (req, res) => {
     try {
         const reports = await Report.find()
             .populate('reporter', 'username email')
@@ -19,7 +25,7 @@ router.get('/reports', auth, admin, async (req, res) => {
 });
 
 // Update report status
-router.put('/reports/:reportId', auth, admin, async (req, res) => {
+router.put('/reports/:reportId', auth, admin, adminLimiter, async (req, res) => {
     try {
         const report = await Report.findByIdAndUpdate(
             req.params.reportId,
@@ -33,7 +39,7 @@ router.put('/reports/:reportId', auth, admin, async (req, res) => {
 });
 
 // Ban user
-router.post('/ban-user/:userId', auth, admin, async (req, res) => {
+router.post('/ban-user/:userId', auth, admin, adminLimiter, async (req, res) => {
     try {
         const user = await User.findByIdAndUpdate(
             req.params.userId,
@@ -50,7 +56,7 @@ router.post('/ban-user/:userId', auth, admin, async (req, res) => {
 });
 
 // Unban user
-router.post('/unban-user/:userId', auth, admin, async (req, res) => {
+router.post('/unban-user/:userId', auth, admin, adminLimiter, async (req, res) => {
     try {
         const user = await User.findByIdAndUpdate(
             req.params.userId,
